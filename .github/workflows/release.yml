@@ -10,6 +10,9 @@ permissions:
 jobs:
   installer:
     runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -20,9 +23,10 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npx electron-vite build
-      # electron-builder takes the version from the tag, and publishes latest.yml next to the installer, which
-      # is what installed copies read to find updates.
-      - run: npx electron-builder --win --publish always -c.extraMetadata.version=${GITHUB_REF_NAME#v}
-        shell: bash
+      - run: npx electron-builder --win --publish never -c.extraMetadata.version=${GITHUB_REF_NAME#v}
+      # Uploaded by hand so the release always holds the installer and latest.yml, which installed copies read to find
+      # updates. The installer has no version in its name, so releases/latest/download/Lattice-Testbench-Setup.exe
+      # is always the newest one.
+      - run: gh release create "$GITHUB_REF_NAME" dist/Lattice-Testbench-Setup.exe dist/Lattice-Testbench-Setup.exe.blockmap dist/latest.yml --title "$GITHUB_REF_NAME" --generate-notes
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
