@@ -15,7 +15,7 @@
 # generated password kept in the config. relay/reaper.py reads it to tell which published names still have
 # a live tunnel.
 #
-# It installs frps as a service, restricted to the port range, with a random token. The token is printed
+# It installs frps into /opt/testbench-relay (INSTALL_DIR to change it) as the testbench-relay service, restricted to the port range, with a random token. The token is printed
 # at the end: paste it into Lattice Testbench under Extensions > Publishing. Run it again to upgrade or to
 # change the range; the existing token is kept.
 set -euo pipefail
@@ -29,7 +29,7 @@ BIND_ADDR="${BIND_ADDR:-0.0.0.0}"
 PROXY_BIND_ADDR="${PROXY_BIND_ADDR:-0.0.0.0}"
 API_PORT="${API_PORT:-7500}"
 if [ "$BIND_ADDR" = "0.0.0.0" ]; then API_ADDR="127.0.0.1"; else API_ADDR="$BIND_ADDR"; fi
-CONFIG_DIR="/etc/frp"
+CONFIG_DIR="${INSTALL_DIR:-/opt/testbench-relay}"
 CONFIG="$CONFIG_DIR/frps.toml"
 
 if [ "$(id -u)" -ne 0 ]; then
@@ -48,7 +48,8 @@ echo "Downloading frp $FRP_VERSION..."
 curl -fsSL -o "$work/frp.tar.gz" "https://github.com/fatedier/frp/releases/download/v${FRP_VERSION}/frp_${FRP_VERSION}_linux_amd64.tar.gz"
 echo "$FRP_SHA256  $work/frp.tar.gz" | sha256sum -c -
 tar -xzf "$work/frp.tar.gz" -C "$work"
-install -m 0755 "$work/frp_${FRP_VERSION}_linux_amd64/frps" /usr/local/bin/frps
+mkdir -p "$CONFIG_DIR"
+install -m 0755 "$work/frp_${FRP_VERSION}_linux_amd64/frps" "$CONFIG_DIR/frps"
 
 mkdir -p "$CONFIG_DIR"
 if [ -f "$CONFIG" ] && grep -q '^auth.token' "$CONFIG"; then
@@ -82,15 +83,15 @@ allowPorts = [
 ]
 EOF
 
-cat > /etc/systemd/system/frps.service <<EOF
+cat > /etc/systemd/system/testbench-relay.service <<EOF
 [Unit]
-Description=frp server for Lattice Testbench
+Description=Testbench relay (frps for Lattice Testbench)
 # tailscaled too, for when frps binds a tailnet address; harmless where there is none.
 After=network-online.target tailscaled.service
 Wants=network-online.target
 
 [Service]
-ExecStart=/usr/local/bin/frps -c ${CONFIG}
+ExecStart=${CONFIG_DIR}/frps -c ${CONFIG}
 Restart=on-failure
 RestartSec=3
 NoNewPrivileges=true
@@ -100,8 +101,8 @@ WantedBy=multi-user.target
 EOF
 
 systemctl daemon-reload
-systemctl enable --now frps
-systemctl restart frps
+systemctl enable --now testbench-relay
+systemctl restart testbench-relay
 
 if command -v ufw >/dev/null 2>&1 && ufw status | grep -q "Status: active"; then
     if [ "$BIND_ADDR" = "0.0.0.0" ]; then

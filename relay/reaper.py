@@ -11,13 +11,13 @@ A name is deleted when its tunnel has been missing for GRACE_SECONDS (long enoug
 drop, after which frpc reconnects), or at once when its SRV port is now served by a different tunnel.
 If frps cannot be asked, nothing is deleted: being blind is not evidence that a tunnel is gone.
 
-Configuration comes from the environment (see reaper-install.sh, which writes /etc/lattice-reaper.env):
+Configuration comes from the environment (see reaper-install.sh, which writes /opt/testbench-reaper/reaper.env):
   CF_TOKEN      Cloudflare API token with Zone > DNS > Edit on CF_ZONE
   CF_ZONE       the domain, e.g. example.net
   FRPS_API      e.g. http://100.64.0.1:7500
-  FRPS_USER, FRPS_PASSWORD   the webServer credentials in the relay's /etc/frp/frps.toml
+  FRPS_USER, FRPS_PASSWORD   the webServer credentials in the relay's frps.toml
   GRACE_SECONDS default 600
-  STATE_FILE    default /var/lib/lattice-reaper/state.json
+  STATE_FILE    default /opt/testbench-reaper/state.json
 """
 import base64
 import json
@@ -66,11 +66,11 @@ def label_of(record):
 
 def main():
     if not os.environ.get("CF_TOKEN") or not os.environ.get("FRPS_PASSWORD"):
-        print("Not configured yet: set CF_TOKEN and FRPS_PASSWORD in /etc/lattice-reaper.env", file=sys.stderr)
+        print("Not configured yet: set CF_TOKEN and FRPS_PASSWORD in /opt/testbench-reaper/reaper.env", file=sys.stderr)
         return 0
     zone_name = os.environ["CF_ZONE"]
     grace = int(os.environ.get("GRACE_SECONDS", "600"))
-    state_file = os.environ.get("STATE_FILE", "/var/lib/lattice-reaper/state.json")
+    state_file = os.environ.get("STATE_FILE", "/opt/testbench-reaper/state.json")
 
     try:
         online = live_tunnels()
