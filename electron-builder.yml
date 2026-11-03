@@ -1,0 +1,21 @@
+appId: dev.lattice-testbench.app
+productName: Lattice Testbench
+directories:
+  output: dist
+files:
+  - out/**
+  - package.json
+win:
+  target: nsis
+  # assets/icon.png, rendered from assets/icon.svg by `npm run icon`; electron-builder makes the .ico from it.
+  icon: assets/icon.png
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  # No spaces, so the file name in latest.yml is the file name on GitHub Releases.
+  artifactName: Lattice-Testbench-Setup-${version}.${ext}
+# Where installed copies look for updates. Replace OWNER with the GitHub account that hosts the repository.
+publish:
+  provider: github
+  owner: Selixe1351
+  repo: lattice-testbench
