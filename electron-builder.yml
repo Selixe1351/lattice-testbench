@@ -12,8 +12,8 @@ win:
 nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
-  # No spaces, so the file name in latest.yml is the file name on GitHub Releases.
-  artifactName: Lattice-Testbench-Setup-${version}.${ext}
+  # No spaces and no version, so releases/latest/download/Lattice-Testbench-Setup.exe is always the newest installer.
+  artifactName: Lattice-Testbench-Setup.${ext}
 # Where installed copies look for updates. The GitHub repository that hosts releases.
 publish:
   provider: github
