@@ -14,7 +14,7 @@ nsis:
   allowToChangeInstallationDirectory: true
   # No spaces, so the file name in latest.yml is the file name on GitHub Releases.
   artifactName: Lattice-Testbench-Setup-${version}.${ext}
-# Where installed copies look for updates. Replace OWNER with the GitHub account that hosts the repository.
+# Where installed copies look for updates. The GitHub repository that hosts releases.
 publish:
   provider: github
   owner: Selixe1351
