@@ -7,7 +7,7 @@ import { fetchCached } from "../../../sources";
 import type { PublishSettings } from "./settings";
 
 /**
- * An outbound frp tunnel from this PC to a VPS. Players connect to the VPS; this PC only ever dials out, so
+ * An outbound frp tunnel from this PC to a tunnel server. Players connect to the tunnel server; this PC only ever dials out, so
  * its address appears in no DNS record and no port needs forwarding. frpc is fetched from the frp releases
  * and checked against the checksum published with them.
  */
@@ -21,24 +21,24 @@ const ARCHIVE = {
 const CONNECT_TIMEOUT_MS = 20_000;
 
 export interface Tunnel {
-    /** The port on the VPS that players reach. */
+    /** The port on the tunnel server that players reach. */
     remotePort: number;
     /** Closes the tunnel. A tunnel closed this way does not call the exit handler. */
     stop(): Promise<void>;
 }
 
 /**
- * Where a tunnel goes: the frps on your VPS, which checks a shared token.
+ * Where a tunnel goes: the frps on your tunnel server, which checks a shared token.
  */
 export interface TunnelTarget {
     host: string;
     port: number;
     token?: string;
-    /** The VPS port range, for the message when a port is refused. */
+    /** The tunnel server port range, for the message when a port is refused. */
     range?: [number, number];
 }
 
-/** The VPS, as the extension settings describe it. */
+/** The tunnel server, as the extension settings describe it. */
 export function targetOf(settings: PublishSettings): TunnelTarget {
     return { host: settings.tunnelHost, port: settings.tunnelPort, token: settings.tunnelToken, range: [settings.tunnelFirstPort, settings.tunnelLastPort] };
 }
@@ -86,20 +86,20 @@ const TAILSCALE = /^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./;
 
 /** What a failed frpc line means, in words a person can act on; frpc's own text is kept only as a fallback. */
 export function explain(line: string, target: TunnelTarget): string {
-    const vps = `${target.host}:${target.port}`;
+    const server = `${target.host}:${target.port}`;
     if (/i\/o timeout|connectex: A connection attempt failed|no route to host|network is unreachable|no such host/i.test(line)) {
         // A tailnet address answers only from inside its tailnet, so this is nearly always the wrong account.
         const hint = TAILSCALE.test(target.host)
-            ? " That is a Tailscale address: check Tailscale is running on this PC and signed in to the tailnet the VPS is on."
-            : " Check the VPS address in Settings and that the VPS is up.";
-        return `Could not reach the VPS at ${vps}.${hint}`;
+            ? " That is a Tailscale address: check Tailscale is running on this PC and signed in to the tailnet the tunnel server is on."
+            : " Check the Tunnel server address in Settings and that the tunnel server is up.";
+        return `Could not reach the tunnel server at ${server}.${hint}`;
     }
-    if (/connection refused|actively refused/i.test(line)) return `The VPS at ${vps} answered, but frps is not listening there. Check that frps is running on it.`;
-    if (/token/i.test(line)) return "The VPS rejected the tunnel token. Copy it again from /etc/frp/frps.toml into Settings.";
-    if (/port not allowed/i.test(line)) return `The VPS does not allow that port. Make the tunnel ports in Settings (${target.range?.join("-") ?? "?"}) match allowPorts on the VPS.`;
-    if (/port already used/i.test(line)) return "That port on the VPS is already taken, perhaps by another PC's tunnel. Try publishing again.";
-    if (/is already in use/i.test(line)) return "The VPS still has a tunnel with this server's name, perhaps left by a crash. Wait a minute and try again.";
-    return `The VPS refused the tunnel: ${line}`;
+    if (/connection refused|actively refused/i.test(line)) return `The tunnel server at ${server} answered, but frps is not listening there. Check that frps is running on it.`;
+    if (/token/i.test(line)) return "The tunnel server rejected the tunnel token. Copy it again from /etc/frp/frps.toml into Settings.";
+    if (/port not allowed/i.test(line)) return `The tunnel server does not allow that port. Make the tunnel ports in Settings (${target.range?.join("-") ?? "?"}) match allowPorts on the tunnel server.`;
+    if (/port already used/i.test(line)) return "That port on the tunnel server is already taken, perhaps by another PC's tunnel. Try publishing again.";
+    if (/is already in use/i.test(line)) return "The tunnel server still has a tunnel with this server's name, perhaps left by a crash. Wait a minute and try again.";
+    return `The tunnel server refused the tunnel: ${line}`;
 }
 
 async function frpc(cacheDir: string): Promise<string> {
@@ -116,7 +116,7 @@ async function frpc(cacheDir: string): Promise<string> {
 }
 
 /**
- * Opens a tunnel from [localPort] on this PC to [remotePort] on the VPS and resolves once frps has accepted
+ * Opens a tunnel from [localPort] on this PC to [remotePort] on the tunnel server and resolves once frps has accepted
  * it. [onExit] is called if it later dies on its own.
  */
 export async function open(

@@ -5,10 +5,10 @@ import type { PublishSettings } from "./settings";
  * Gives a test server a name under the person's own domain, using two Cloudflare DNS records that are
  * deliberately not proxied (Cloudflare's proxy does not carry Minecraft traffic without Spectrum):
  *
- *   testbench-ab12.example.net                   A    <the VPS>
- *   _minecraft._tcp.testbench-ab12.example.net   SRV  0 5 <port on the VPS> testbench-ab12.example.net
+ *   testbench-ab12.example.net                   A    <the tunnel server>
+ *   _minecraft._tcp.testbench-ab12.example.net   SRV  0 5 <port on the tunnel server> testbench-ab12.example.net
  *
- * The records point at the VPS that tunnels to this PC, never at this PC, so the home address is not
+ * The records point at the tunnel server that tunnels to this PC, never at this PC, so the home address is not
  * published anywhere. The SRV record is what lets players type the name with no port.
  */
 
@@ -16,7 +16,7 @@ const API = "https://api.cloudflare.com/client/v4";
 export const PREFIX = "testbench-";
 /**
  * Every record says which PC made it, so a start-up purge on one PC leaves alone the live records of
- * another PC publishing under the same zone. The optional reaper script (vps/reaper.py) covers the rest.
+ * another PC publishing under the same zone. The optional reaper script (relay/reaper.py) covers the rest.
  */
 export const COMMENT = `Testbench on ${hostname()}`;
 
@@ -61,9 +61,9 @@ export function labelFor(serverId: string): string {
     return `${PREFIX}${serverId.slice(serverId.lastIndexOf("-") + 1)}`;
 }
 
-/** Names [serverId] after the VPS, with the SRV record pointing at [port] on it. */
+/** Names [serverId] after the tunnel server, with the SRV record pointing at [port] on it. */
 export async function publish(settings: PublishSettings, serverId: string, port: number): Promise<Published> {
-    if (!configured(settings)) throw new Error("Set the domain, Cloudflare token and VPS address in Settings first.");
+    if (!configured(settings)) throw new Error("Set the domain, Cloudflare token and Tunnel server address in Settings first.");
     const zone = await zoneId(settings);
     const host = `${labelFor(serverId)}.${settings.publicDomain}`;
     const target = settings.tunnelPublicHost || settings.tunnelHost;

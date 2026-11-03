@@ -1,0 +1,14 @@
+{
+  "$schema": "../../packages/extension-api/extension.schema.json",
+  "id": "reset-world",
+  "name": "Reset world",
+  "description": "Example in TypeScript: deletes a server's world folders and starts it again.",
+  "version": "1.0.0",
+  "api": 1,
+  "main": "dist/index.js",
+  "actions": [{ "id": "reset", "label": "Reset world", "when": ["running"] }],
+  "setup": [
+    { "text": "In this folder run npm install, then npm run build. It writes dist/index.js." },
+    { "text": "Copy the folder into the extensions folder, restart the app and turn the extension on." }
+  ]
+}

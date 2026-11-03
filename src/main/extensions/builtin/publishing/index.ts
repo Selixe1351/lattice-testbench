@@ -1,4 +1,4 @@
-import type { Extension, ExtensionContext } from "../../types";
+import { defineExtension } from "@shared/extension-api";
 import * as dns from "./cloudflare";
 import * as discord from "./discord";
 import { publishSettings } from "./settings";
@@ -6,7 +6,7 @@ import * as tunnels from "./tunnel";
 
 /**
  * Publishing: gives a test server a public name. A Cloudflare DNS record and an SRV record name it, an outbound
- * frp tunnel to your VPS carries the traffic, so this PC's address is in no record and no port is forwarded.
+ * frp tunnel to your tunnel server carries the traffic, so this PC's address is in no record and no port is forwarded.
  * Optionally tells a Discord channel when a server goes up and when the first tester joins.
  */
 
@@ -18,21 +18,21 @@ interface Published {
     at: number;
 }
 
-export const publishing: Extension = {
+export const publishing = defineExtension({
     manifest: {
         id: "publishing",
         name: "Publishing",
-        description: "Give a test server a public name so testers can join it from anywhere, through your own VPS and domain.",
+        description: "Give a test server a public name so testers can join it from anywhere, through your own tunnel server and domain.",
         version: "1.0.0",
         api: 1,
         permissions: ["Opens outbound network connections", "Edits DNS records in your Cloudflare zone", "Runs frpc"],
         settings: [
             { key: "publicDomain", label: "Domain", type: "text", placeholder: "example.net", hint: "A domain in your Cloudflare account. Servers get names like testbench-ab12.example.net." },
             { key: "cloudflareToken", label: "Cloudflare token", type: "secret", hint: "An API token with Zone > DNS > Edit on that domain only." },
-            { key: "tunnelHost", label: "VPS address", type: "text", placeholder: "203.0.113.7", hint: "The VPS that runs frps, as this PC dials it. A Tailscale address works." },
-            { key: "tunnelPublicHost", label: "VPS public address", type: "text", hint: "Where players reach the VPS, if that differs. Empty means the same." },
+            { key: "tunnelHost", label: "Tunnel server address", type: "text", placeholder: "203.0.113.7", hint: "The tunnel server that runs frps, as this PC dials it. A Tailscale address works." },
+            { key: "tunnelPublicHost", label: "Public address", type: "text", hint: "Where players reach the tunnel server, if that differs. Empty means the same." },
             { key: "tunnelPort", label: "frps control port", type: "number", default: 7000 },
-            { key: "tunnelToken", label: "Tunnel token", type: "secret", hint: "auth.token from /etc/frp/frps.toml on the VPS." },
+            { key: "tunnelToken", label: "Tunnel token", type: "secret", hint: "auth.token from /etc/frp/frps.toml on the tunnel server." },
             { key: "tunnelFirstPort", label: "First tunnel port", type: "number", default: 25700 },
             { key: "tunnelLastPort", label: "Last tunnel port", type: "number", default: 25799, hint: "frps must allow the same range (allowPorts)." },
             { key: "discordWebhook", label: "Discord webhook", type: "secret", hint: "Optional. Posts when a server goes public and when the first tester joins." },
@@ -42,15 +42,15 @@ export const publishing: Extension = {
             { id: "unpublish", label: "Unpublish", when: ["public"] },
         ],
         setup: [
-            { text: "Get a domain on Cloudflare and a small VPS with a public IP.", link: "https://dash.cloudflare.com" },
-            { text: "On the VPS run vps/setup.sh from this repository. It installs frps and prints the control port and token.", copy: "sudo bash vps/setup.sh" },
+            { text: "Get a domain on Cloudflare and a machine players can reach on a public IP: a cloud VM, a container host, or a Pi or home server with ports forwarded.", link: "https://dash.cloudflare.com" },
+            { text: "Run frps on that machine with relay/setup.sh, or with Docker (see relay/README.md). It prints the control port and token.", copy: "sudo bash relay/setup.sh" },
             { text: "Create a Cloudflare API token with Zone > DNS > Edit on your domain.", link: "https://dash.cloudflare.com/profile/api-tokens" },
-            { text: "Fill in the domain, token, VPS address and tunnel token above.", needs: ["publicDomain", "cloudflareToken", "tunnelHost", "tunnelToken"] },
+            { text: "Fill in the domain, token, Tunnel server address and tunnel token above.", needs: ["publicDomain", "cloudflareToken", "tunnelHost", "tunnelToken"] },
             { text: "Deploy a server with online mode on, then press Publish on its page. Offline servers cannot be published." },
         ],
     },
 
-    async activate(ctx: ExtensionContext) {
+    async activate(ctx) {
         const states = new Map<string, Published>();
         const settings = () => publishSettings(ctx.settings.all());
         const log = (id: string, text: string, stream: "out" | "err" = "out") => ctx.servers.log(id, "app", text, stream);
@@ -72,7 +72,7 @@ export const publishing: Extension = {
             if (!port) throw new Error("The server has no port yet.");
             const current = settings();
             if (!dns.configured(current) || !tunnels.configured(current)) {
-                throw new Error("Fill in the domain, Cloudflare token, VPS address and tunnel token in Extensions > Publishing first.");
+                throw new Error("Fill in the domain, Cloudflare token, Tunnel server address and tunnel token in Extensions > Publishing first.");
             }
 
             const held = new Set([...states.values()].flatMap((s) => (s.tunnel ? [s.tunnel.remotePort] : [])));
@@ -160,4 +160,4 @@ export const publishing: Extension = {
             for (const id of [...states.keys()]) await unpublish(id).catch((e: Error) => console.warn(`Could not unpublish ${id}`, e));
         });
     },
-};
+});

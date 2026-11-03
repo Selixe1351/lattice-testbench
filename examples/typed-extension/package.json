@@ -1,0 +1,10 @@
+{
+  "name": "typed-extension-example",
+  "private": true,
+  "scripts": { "build": "tsc" },
+  "devDependencies": {
+    "@lattice-testbench/extension-api": "file:../../packages/extension-api",
+    "@types/node": "^20.19.0",
+    "typescript": "^5.6.0"
+  }
+}

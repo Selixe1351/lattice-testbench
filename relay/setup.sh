@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
-# Sets up frps on a fresh Debian or Ubuntu VPS so the Lattice Testbench can publish servers through it.
+# Sets up frps on a fresh Debian or Ubuntu tunnel server so the Lattice Testbench can publish servers through it.
 #
 #   curl -fsSL <this file> | sudo bash        or        sudo bash setup.sh
 #
 # Optional: CONTROL_PORT=7000 FIRST_PORT=25700 LAST_PORT=25799 sudo -E bash setup.sh
 #
 # To keep the control port off the internet, bind it to a tailnet address and the player ports to the
-# public one, then give Lattice Testbench the tailnet address as "VPS address" and the public one as
-# "Public VPS address":
+# public one, then give Lattice Testbench the tailnet address as "Tunnel server address" and the public one as
+# "Public Tunnel server address":
 #
 #   BIND_ADDR=100.64.0.1 PROXY_BIND_ADDR=203.0.113.7 sudo -E bash setup.sh
 #
 # frps also serves its status API on BIND_ADDR (127.0.0.1 when that is 0.0.0.0), port API_PORT, with a
-# generated password kept in the config. vps/reaper.py reads it to tell which published names still have
+# generated password kept in the config. relay/reaper.py reads it to tell which published names still have
 # a live tunnel.
 #
 # It installs frps as a service, restricted to the port range, with a random token. The token is printed
@@ -122,19 +122,19 @@ if command -v ufw >/dev/null 2>&1 && ufw status | grep -q "Status: active"; then
     echo "ufw: opened ${FIRST_PORT}-${LAST_PORT}."
 else
     if [ "$BIND_ADDR" = "0.0.0.0" ]; then
-        echo "Open ${CONTROL_PORT}/tcp and ${FIRST_PORT}-${LAST_PORT}/tcp in your VPS provider's firewall if it has one."
+        echo "Open ${CONTROL_PORT}/tcp and ${FIRST_PORT}-${LAST_PORT}/tcp in your tunnel server provider's firewall if it has one."
     else
-        echo "Open ${FIRST_PORT}-${LAST_PORT}/tcp in your VPS provider's firewall if it has one. ${CONTROL_PORT} stays closed: it is on ${BIND_ADDR} only."
+        echo "Open ${FIRST_PORT}-${LAST_PORT}/tcp in your tunnel server provider's firewall if it has one. ${CONTROL_PORT} stays closed: it is on ${BIND_ADDR} only."
     fi
 fi
 
 echo
 echo "frps is running."
 if [ "$BIND_ADDR" = "0.0.0.0" ]; then
-    echo "  VPS address : $(curl -fsS https://api.ipify.org 2>/dev/null || echo '<this server address>')"
+    echo "  Tunnel server address : $(curl -fsS https://api.ipify.org 2>/dev/null || echo '<this server address>')"
 else
-    echo "  VPS address : ${BIND_ADDR}"
-    echo "  Public VPS address : $([ "$PROXY_BIND_ADDR" = "0.0.0.0" ] && curl -fsS https://api.ipify.org 2>/dev/null || echo "$PROXY_BIND_ADDR")"
+    echo "  Tunnel server address : ${BIND_ADDR}"
+    echo "  Public Tunnel server address : $([ "$PROXY_BIND_ADDR" = "0.0.0.0" ] && curl -fsS https://api.ipify.org 2>/dev/null || echo "$PROXY_BIND_ADDR")"
 fi
 echo "  frps port   : ${CONTROL_PORT}"
 echo "  Port range  : ${FIRST_PORT}-${LAST_PORT}"

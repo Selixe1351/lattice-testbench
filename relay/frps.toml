@@ -1,0 +1,6 @@
+# Used by docker-compose.yml. The token comes from the FRPS_TOKEN environment variable.
+bindPort = 7000
+auth.method = "token"
+auth.token = "{{ .Envs.FRPS_TOKEN }}"
+# Players reach published servers on these ports; the app is given the same range in its settings.
+allowPorts = [{ start = 25700, end = 25799 }]

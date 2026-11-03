@@ -110,6 +110,17 @@ describe("extension host", () => {
         expect(handlers.get("ext:mine:ping")?.()).toBe("pong");
     });
 
+    it("answers a require of the typed API package without node_modules", async () => {
+        const dir = await mkdtemp(join(tmpdir(), "testbench-ext-"));
+        await mkdir(join(dir, "typed"));
+        await writeFile(join(dir, "typed", "extension.json"), JSON.stringify({ ...manifest, id: "typed", name: "Typed", main: "index.js" }));
+        await writeFile(join(dir, "typed", "index.js"), 'const { defineExtension } = require("@lattice-testbench/extension-api"); exports.activate = defineExtension({ manifest: {}, activate: (ctx) => ctx.handle("ok", () => 1) }).activate;');
+        const { host, handlers } = setup(dir);
+        await host.discover();
+        await host.setEnabled("typed", true);
+        expect(handlers.get("ext:typed:ok")?.()).toBe(1);
+    });
+
     it("seals secret settings on disk and restores them on load", async () => {
         const dir = await mkdtemp(join(tmpdir(), "testbench-settings-"));
         const file = join(dir, "settings.json");

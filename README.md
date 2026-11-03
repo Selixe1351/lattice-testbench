@@ -30,13 +30,14 @@ Open **Extensions** in the sidebar. Each card has numbered setup steps and a set
 
 | Built in | What it does |
 |---|---|
-| Publishing | A public name for a server through your own VPS (frp) and Cloudflare domain, with Discord posts |
+| Publishing | A public name for a server through your own tunnel server (frp) and Cloudflare domain, with Discord posts |
 | AI agents (MCP) | Claude Code or any MCP client deploys servers, reads consoles, runs commands, edits files |
 | Bots | Fake players you drive from a tab |
 | Lattice | The Lattice platform and your module jars, with status and data tabs |
 
-Writing your own takes a folder with `extension.json` and `index.js`. See [docs/extensions.md](docs/extensions.md)
-and [examples/hello-extension](examples/hello-extension).
+Writing your own takes a folder with `extension.json` and `index.js`, or TypeScript with full types from your manifest.
+See [docs/extensions.md](docs/extensions.md), [examples/hello-extension](examples/hello-extension) and
+[examples/typed-extension](examples/typed-extension).
 
 ## Build from source
 
@@ -61,7 +62,7 @@ src/main/extensions/  Extension host, hooks, and the built-in extensions
 src/renderer/         The window (React)
 src/shared/           Types shared by both, including the extension manifest
 docs/, examples/      How to write an extension
-vps/                  Scripts for the VPS the Publishing extension tunnels through
+relay/                Setup for the tunnel server the Publishing extension uses (any host, or Docker)
 ```
 
 ## Privacy

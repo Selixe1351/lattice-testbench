@@ -47,10 +47,10 @@ describe("tunnel", () => {
     it("explains a failed login in words a person can act on", () => {
         // Captured from frpc 0.71.1 dialling a tailnet address from a PC on another tailnet.
         const timeout = "login to the server failed: dial tcp 100.64.0.1:7000: i/o timeout. With loginFailExit enabled, no additional retries will be attempted";
-        expect(explain(timeout, targetOf({ ...settings, tunnelHost: "100.64.0.1" }))).toMatch(/Could not reach the VPS at 100\.64\.0\.1:7000\. That is a Tailscale address/);
-        expect(explain(timeout, targetOf(settings))).toMatch(/Check the VPS address in Settings/);
+        expect(explain(timeout, targetOf({ ...settings, tunnelHost: "100.64.0.1" }))).toMatch(/Could not reach the tunnel server at 100\.64\.0\.1:7000\. That is a Tailscale address/);
+        expect(explain(timeout, targetOf(settings))).toMatch(/Check the Tunnel server address in Settings/);
         expect(explain("login to the server failed: token in login doesn't match token from configuration", targetOf(settings))).toMatch(/rejected the tunnel token/);
         expect(explain("[x] start error: port not allowed", targetOf(settings))).toMatch(/25700-25702/);
-        expect(explain("something new", targetOf(settings))).toBe("The VPS refused the tunnel: something new");
+        expect(explain("something new", targetOf(settings))).toBe("The tunnel server refused the tunnel: something new");
     });
 });

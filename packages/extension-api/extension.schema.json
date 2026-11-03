@@ -1,0 +1,64 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Lattice Testbench extension manifest",
+  "type": "object",
+  "required": ["id", "name", "description", "version", "api"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]{1,31}$", "description": "Lowercase letters, digits and dashes." },
+    "name": { "type": "string" },
+    "description": { "type": "string" },
+    "version": { "type": "string" },
+    "api": { "const": 1, "description": "The extension API this was written for." },
+    "main": { "type": "string", "description": "Entry file, relative to this folder. Exports activate(ctx)." },
+    "permissions": { "type": "array", "items": { "type": "string" }, "description": "Plain words shown before someone enables the extension. Not enforced." },
+    "settings": { "type": "array", "items": { "$ref": "#/definitions/field" } },
+    "deploy": { "type": "array", "items": { "$ref": "#/definitions/field" } },
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "label"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string" },
+          "label": { "type": "string" },
+          "when": { "type": "array", "items": { "enum": ["running", "public", "not-public"] } }
+        }
+      }
+    },
+    "setup": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["text"],
+        "additionalProperties": false,
+        "properties": {
+          "text": { "type": "string" },
+          "link": { "type": "string" },
+          "copy": { "type": "string" },
+          "copyFrom": { "type": "string" },
+          "needs": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "field": {
+      "type": "object",
+      "required": ["key", "label", "type"],
+      "additionalProperties": false,
+      "properties": {
+        "key": { "type": "string" },
+        "label": { "type": "string" },
+        "type": { "enum": ["text", "secret", "number", "boolean", "select", "path", "files"] },
+        "hint": { "type": "string" },
+        "placeholder": { "type": "string" },
+        "options": { "type": "array", "items": { "type": "object", "required": ["value", "label"], "properties": { "value": { "type": "string" }, "label": { "type": "string" } } } },
+        "extensions": { "type": "array", "items": { "type": "string" } },
+        "default": { "type": ["string", "number", "boolean", "array"] }
+      }
+    }
+  }
+}

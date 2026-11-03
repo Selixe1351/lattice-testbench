@@ -1,0 +1,14 @@
+{
+  "name": "@lattice-testbench/extension-api",
+  "version": "1.0.0",
+  "description": "Types and defineExtension() for writing Lattice Testbench extensions.",
+  "license": "MIT",
+  "type": "commonjs",
+  "main": "dist/extension-api.js",
+  "types": "dist/extension-api.d.ts",
+  "files": ["dist", "extension.schema.json"],
+  "repository": { "type": "git", "url": "https://github.com/Selixe1351/lattice-testbench.git", "directory": "packages/extension-api" },
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  }
+}

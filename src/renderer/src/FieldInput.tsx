@@ -6,7 +6,7 @@ const api = window.testbench;
 const name = (path: string) => path.split(/[\\/]/).pop() ?? path;
 
 /** A list of files picked from this PC: an Add button, and the picked ones as chips under it. */
-export function FileList({ label, hint, files, onChange, extensions }: { label: string; hint?: string; files: string[]; onChange: (files: string[]) => void; extensions?: string[] }) {
+export function FileList({ label, hint, files, onChange, extensions }: { label: string; hint?: string; files: string[]; onChange: (files: string[]) => void; extensions?: readonly string[] }) {
     const add = async () => {
         const jars = !extensions || extensions.includes("jar");
         const picked = jars ? await api.pickJars(`Pick ${label.toLowerCase()}`) : [await api.pickFile(`Pick ${label.toLowerCase()}`, extensions)].filter((p): p is string => Boolean(p));

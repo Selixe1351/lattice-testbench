@@ -1,0 +1,15 @@
+# frps in a container. Set FRPS_TOKEN before starting; the app needs the same token.
+#
+#   FRPS_TOKEN=$(openssl rand -hex 24) docker compose up -d
+#
+# Host networking keeps every published port reachable without listing them one by one.
+services:
+  frps:
+    image: snowdreamtech/frps:0.71.1
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      FRPS_TOKEN: ${FRPS_TOKEN:?Set FRPS_TOKEN to a long random string}
+    volumes:
+      - ./frps.toml:/etc/frp/frps.toml:ro
+    command: ["-c", "/etc/frp/frps.toml"]

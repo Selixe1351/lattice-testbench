@@ -6,7 +6,7 @@ import { moduleEvent, moduleLine, peerLine, type DataChange, type DataDocument, 
 import { readEntryBytes, zipEntries } from "../../../jar";
 import { fetchCached } from "../../../sources";
 import type { PrepareContext, ProcessPlan } from "../../hooks";
-import type { Extension, ExtensionContext } from "../../types";
+import { defineExtension } from "@shared/extension-api";
 import * as data from "./data";
 
 /**
@@ -25,7 +25,7 @@ const MARK_LIMIT = 10_000;
 const latticeDir = (proc: ProcessPlan): string => join(proc.dir, "plugins", proc.software === "velocity" ? "lattice" : "Lattice");
 const root = (proc: ProcessPlan): string => (proc.software === "velocity" ? "vlattice" : "lattice");
 
-export const lattice: Extension = {
+export const lattice = defineExtension({
     manifest: {
         id: "lattice",
         name: "Lattice",
@@ -57,7 +57,7 @@ export const lattice: Extension = {
         actions: [{ id: "recopy", label: "Copy modules again", when: ["running"] }],
     },
 
-    activate(ctx: ExtensionContext) {
+    activate(ctx) {
         const marks = new Map<string, { at: number; docs: Map<string, string> }>();
         const storageOf = (id: string): Exclude<StorageKind, "default"> => lastStorage.get(id) ?? "sqlite";
         const lastStorage = new Map<string, Exclude<StorageKind, "default">>();
@@ -253,7 +253,7 @@ export const lattice: Extension = {
             run: ({ id, collection, process, limit }) => documents(id, process ?? "server", collection, Number(limit ?? 50)),
         });
     },
-};
+});
 
 /** A module's id: the `id` in its jar's module.yml, which is what Lattice reports it by. Its file name is the fallback. */
 async function moduleId(file: string): Promise<string> {

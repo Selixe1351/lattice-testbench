@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "CommonJS",
+    "moduleResolution": "Node10",
+    "strict": true,
+    "declaration": true,
+    "skipLibCheck": true,
+    "rootDir": "../../src/shared",
+    "outDir": "dist",
+    "types": []
+  },
+  "files": ["../../src/shared/extension-api.ts"]
+}

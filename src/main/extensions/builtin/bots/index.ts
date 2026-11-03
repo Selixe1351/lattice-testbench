@@ -1,10 +1,10 @@
 import type { BotAction } from "@shared/bots";
-import type { Extension, ExtensionContext } from "../../types";
+import { defineExtension } from "@shared/extension-api";
 import { Bots } from "./bots";
 
 /** Bots: test players (mineflayer) you can drive from the Bots tab or from an AI agent. They join offline-mode servers. */
 
-export const bots: Extension = {
+export const bots = defineExtension({
     manifest: {
         id: "bots",
         name: "Bots",
@@ -22,7 +22,7 @@ export const bots: Extension = {
         ],
     },
 
-    activate(ctx: ExtensionContext) {
+    activate(ctx) {
         const bots = new Bots();
         bots.on("bots", (list) => ctx.send("bots", list));
         bots.on("event", (event) => ctx.send("event", event));
@@ -78,4 +78,4 @@ export const bots: Extension = {
             },
         });
     },
-};
+});

@@ -236,7 +236,7 @@ export interface TestbenchApi {
     saveSettings(settings: Settings): Promise<Settings>;
     /** Downloads Java 25 (Eclipse Temurin) into the app's cache and returns its java.exe. */
     installJava(): Promise<string>;
-    pickFile(title: string, extensions?: string[]): Promise<string | null>;
+    pickFile(title: string, extensions?: readonly string[]): Promise<string | null>;
     pickFolder(title: string): Promise<string | null>;
     /** Any number of .jar files; empty when cancelled. */
     pickJars(title: string): Promise<string[]>;

@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
-import { createRequire } from "node:module";
+import Module, { createRequire } from "node:module";
+import { defineExtension } from "@shared/extension-api";
 import { join } from "node:path";
 import { EXTENSION_API, type ExtensionManifest, type ExtensionValue, type ExtensionView } from "@shared/extensions";
 import type { Settings } from "@shared/types";
@@ -39,6 +40,21 @@ interface Known {
 }
 
 const ID = /^[a-z][a-z0-9-]{1,31}$/;
+
+const API_PACKAGE = "@lattice-testbench/extension-api";
+let apiProvided = false;
+
+/**
+ * Lets an extension `require` the typed API package without shipping node_modules: the app answers that one request
+ * itself. The package is only types and an identity function, so the copy here is the whole of it.
+ */
+function provideApiPackage(): void {
+    if (apiProvided) return;
+    apiProvided = true;
+    const loader = Module as unknown as { _load(request: string, parent: unknown, isMain: boolean): unknown };
+    const original = loader._load.bind(loader);
+    loader._load = (request, parent, isMain) => (request === API_PACKAGE ? { defineExtension } : original(request, parent, isMain));
+}
 
 /**
  * Owns every extension. The rule is the one Lattice's kernel keeps for modules: an extension is fully enabled or
@@ -253,7 +269,7 @@ export class ExtensionHost {
             cacheDir: env.cacheDir,
             servers: this.serversFor(running),
             settings: {
-                get: <T extends ExtensionValue = string>(key: string) => this.values(id)[key] as T | undefined,
+                get: (key: string) => this.values(id)[key],
                 all: () => this.values(id),
                 set: async (key, value) => {
                     const settings = env.settings();
@@ -339,6 +355,7 @@ async function loadUserExtension(dir: string): Promise<Extension> {
     return {
         manifest,
         activate(ctx) {
+            provideApiPackage();
             const loaded = createRequire(main)(main) as { activate?: Extension["activate"]; default?: { activate?: Extension["activate"] } };
             const activate = loaded.activate ?? loaded.default?.activate;
             if (typeof activate !== "function") throw new Error(`${manifest.main} does not export activate(ctx)`);

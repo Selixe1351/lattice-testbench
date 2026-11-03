@@ -11,7 +11,7 @@ press **Turn on**. Steps with a tick finish themselves when their settings are f
 
 | Extension | What it does | Needs |
 |---|---|---|
-| Publishing | Gives a server a public name through your own VPS and Cloudflare domain | A VPS, a domain on Cloudflare, `vps/setup.sh` |
+| Publishing | Gives a server a public name through your own tunnel server and Cloudflare domain | A tunnel server, a domain on Cloudflare, `relay/setup.sh` |
 | AI agents (MCP) | Lets Claude Code or any MCP client deploy servers, read consoles, run commands | Nothing. It makes a token for you |
 | Bots | Fake players you drive from a tab | A server in offline mode |
 | Lattice | Runs the Lattice platform and your module jars on a server, with a status and data tab | A Lattice jar |
@@ -42,6 +42,40 @@ exports.activate = (ctx) => {
 ```
 
 Turn it on under Extensions. A **Say hello** button now shows in the menu of every running server.
+
+## TypeScript
+
+The API is fully typed, and the manifest types everything after it. Install the types and declare the extension
+with `defineExtension`:
+
+```ts
+import { defineExtension } from "@lattice-testbench/extension-api";
+
+export const { activate } = defineExtension({
+    manifest: {
+        id: "hello", name: "Hello", description: "Says hello.", version: "1.0.0", api: 1, main: "dist/index.js",
+        settings: [{ key: "greeting", label: "Greeting", type: "text", default: "Hello" }],
+        deploy: [{ key: "motd", label: "Server list message", type: "text" }],
+        actions: [{ id: "say", label: "Say hello", when: ["running"] }],
+    },
+    activate(ctx) {
+        ctx.settings.get("greeting");   // string, because the setting has a default
+        ctx.action("say", () => {});    // "sya" would not compile: no such action in the manifest
+        ctx.hook("prepare", ({ options }) => options.motd);   // string | undefined
+    },
+});
+```
+
+Compile to CommonJS and point `main` at the output. The app answers `require("@lattice-testbench/extension-api")` itself,
+so the folder you ship needs no `node_modules`. A complete project is in
+[`examples/typed-extension`](../examples/typed-extension). Add `"$schema"` to `extension.json` for editor completion
+on the manifest (`packages/extension-api/extension.schema.json`).
+
+Plain JavaScript gets the same checking with `// @ts-check` and
+`const { defineExtension } = require("@lattice-testbench/extension-api")`.
+
+The package is built from `src/shared/extension-api.ts`, so the types an extension sees are the ones the app runs on:
+`npm run build:api`.
 
 ## What the manifest can declare
 

@@ -13,7 +13,8 @@
     "lint": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
     "test": "vitest run",
     "dist": "electron-vite build && electron-builder --win --publish never",
-    "icon": "electron scripts/icon.cjs"
+    "icon": "electron scripts/icon.cjs",
+    "build:api": "tsc -p packages/extension-api/tsconfig.json"
   },
   "engines": {
     "node": ">=20"

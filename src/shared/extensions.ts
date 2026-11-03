@@ -14,10 +14,10 @@ export interface Field {
     hint?: string;
     placeholder?: string;
     /** For "select". */
-    options?: { value: string; label: string }[];
+    options?: readonly { value: string; label: string }[];
     /** For "path" and "files": what the picker offers, e.g. ["jar"]. Empty means any file. */
-    extensions?: string[];
-    default?: string | number | boolean | string[];
+    extensions?: readonly string[];
+    default?: string | number | boolean | readonly string[];
 }
 
 /** One line of "how to get this working". Done when [done] is satisfied, which the window checks live. */
@@ -29,7 +29,7 @@ export interface SetupStep {
     /** Like [copy], but asked of the extension (its `handle` channel of this name), for text that holds a secret. */
     copyFrom?: string;
     /** Settings that must be filled in for the step to count as done. Absent means the person ticks it off. */
-    needs?: string[];
+    needs?: readonly string[];
 }
 
 /** A button on a server's page. */
@@ -37,7 +37,7 @@ export interface ServerAction {
     id: string;
     label: string;
     /** All must hold for the button to show. */
-    when?: ("running" | "public" | "not-public")[];
+    when?: readonly ("running" | "public" | "not-public")[];
 }
 
 export interface ExtensionManifest {
@@ -48,13 +48,13 @@ export interface ExtensionManifest {
     /** The extension API this was written for. The app refuses an extension whose number it does not know. */
     api: number;
     /** Plain words shown before enabling, e.g. "Opens network connections". Not enforced: extensions run with the app's own rights. */
-    permissions?: string[];
+    permissions?: readonly string[];
     /** Settings, drawn on the Extensions page. */
-    settings?: Field[];
+    settings?: readonly Field[];
     /** Options added to the Deploy dialog while the extension is enabled. */
-    deploy?: Field[];
-    actions?: ServerAction[];
-    setup?: SetupStep[];
+    deploy?: readonly Field[];
+    actions?: readonly ServerAction[];
+    setup?: readonly SetupStep[];
     /** Entry file of a user extension, relative to its folder. Built-in extensions have none. */
     main?: string;
 }

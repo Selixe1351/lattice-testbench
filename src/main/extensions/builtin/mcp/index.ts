@@ -1,10 +1,10 @@
 import { randomBytes } from "node:crypto";
-import type { Extension, ExtensionContext } from "../../types";
+import { defineExtension } from "@shared/extension-api";
 import { McpEndpoint } from "./server";
 
 /** AI / MCP: lets an AI agent (Claude Code, any MCP client) deploy and drive test servers over a local, token-protected endpoint. */
 
-export const mcp: Extension = {
+export const mcp = defineExtension({
     manifest: {
         id: "ai-mcp",
         name: "AI agents (MCP)",
@@ -24,13 +24,13 @@ export const mcp: Extension = {
         ],
     },
 
-    async activate(ctx: ExtensionContext) {
+    async activate(ctx) {
         let token = ctx.settings.get("token") ?? "";
         if (!token) {
             token = randomBytes(24).toString("hex");
             await ctx.settings.set("token", token);
         }
-        const port = Number(ctx.settings.get<number>("port") ?? 7820);
+        const port = Number(ctx.settings.get("port"));
 
         const endpoint = new McpEndpoint({ servers: ctx.servers, tools: () => ctx.agentTools() }, () => String(ctx.settings.get("token") ?? ""));
         await endpoint.start(port);
@@ -40,4 +40,4 @@ export const mcp: Extension = {
         // A new port or token only takes effect on a fresh endpoint; say so rather than quietly keep the old one.
         ctx.settings.onChange(() => ctx.status(`Settings changed. Turn the extension off and on to use them (still listening on ${port}).`));
     },
-};
+});
