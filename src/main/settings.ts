@@ -36,6 +36,8 @@ export async function loadSettings(file: string, vault: Vault | null = null): Pr
         const settings: Settings = { ...defaults, ...plain, extensions: { ...(plain.extensions ?? {}) } };
         for (const [path, value] of Object.entries(sealed)) {
             const dot = path.indexOf(".");
+            // Secrets sealed by the old app (licenseKey, cloudflareToken...) have no extension in front; they are not ours.
+            if (dot < 0) continue;
             const id = path.slice(0, dot);
             const key = path.slice(dot + 1);
             const entry = settings.extensions[id] ?? { enabled: false, values: {} };
