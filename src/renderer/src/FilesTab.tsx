@@ -41,6 +41,9 @@ const clean = (message: string) => message.replace(/^Error invoking remote metho
 
 let tokens = 0;
 
+/** How often the folder and the open files are checked for changes made outside the editor. */
+const REFRESH_MS = 2000;
+
 /** Reads a server file into a tab: as text for the editor, or as a picture. */
 const fetchTab = (serverId: string, path: string): Promise<Tab> =>
     isImage(path)
@@ -119,7 +122,42 @@ export function FilesTab({ server }: { server: ServerView }) {
         );
     }, [server.id]);
 
-    const refresh = () => (jar ? loadJar(jar.path, jar.dir) : void load(dir));
+    const refresh = () => {
+        if (jar) loadJar(jar.path, jar.dir);
+        else void load(dir);
+        void syncTabs();
+    };
+
+    // The server writes files on its own (configs on first start, plugin data), and a drop replaces them;
+    // polling keeps the folder and the open files current. Read through refs so typing does not restart it.
+    const tabsRef = useRef(tabs);
+    tabsRef.current = tabs;
+    const syncTabs = useCallback(async () => {
+        await Promise.all(tabsRef.current.filter((t) => !t.readOnly && !dirty(t)).map(async (t) => {
+            // A file that went away keeps its tab, so its text can still be saved back.
+            const fresh = await fetchTab(server.id, t.path).catch(() => null);
+            if (!fresh) return;
+            const changed = t.image ? fresh.image !== t.image : fresh.base !== t.base;
+            if (!changed) return;
+            // Applied only if the tab is still as it was read: an edit or save since then wins.
+            setTabs((all) => all.map((now) => (now.path === t.path && now.base === t.base && now.image === t.image && !dirty(now)
+                ? { ...now, current: fresh.current, base: fresh.base, image: fresh.image, revision: now.revision + 1 }
+                : now)));
+        }));
+    }, [server.id]);
+
+    useEffect(() => {
+        if (jar) return;
+        const timer = setInterval(() => {
+            if (document.hidden) return;
+            api.listFiles(server.id, dir).then(
+                (list) => setEntries((old) => (JSON.stringify(old) === JSON.stringify(list) ? old : list)),
+                (e: Error) => setError(clean(e.message)),
+            );
+            void syncTabs();
+        }, REFRESH_MS);
+        return () => clearInterval(timer);
+    }, [server.id, dir, jar, syncTabs]);
 
     const cancelPending = useCallback(() => {
         if (pendingToken.current) void api.cancelJar(pendingToken.current);
@@ -462,7 +500,7 @@ export function FilesTab({ server }: { server: ServerView }) {
                         <>
                             <button className="btn sm ghost icon" title="New file" onClick={() => startCreate("file")}><FilePlus /></button>
                             <button className="btn sm ghost icon" title="New folder" onClick={() => startCreate("folder")}><FolderPlus /></button>
-                            <span className="faint" title="Drop files here to add them"><Upload /></span>
+                            <span className="faint" title="Drop files here to add them, replacing any with the same name"><Upload /></span>
                         </>
                     )}
                 </div>

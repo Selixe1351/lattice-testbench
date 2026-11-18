@@ -157,13 +157,21 @@ export async function duplicate(root: string, path: string): Promise<string> {
     throw new Error("Too many copies of that file already.");
 }
 
-/** Copies files or folders from outside into [dir] of the server. A name already there is an error, never overwritten. */
+/**
+ * Copies files or folders from outside into [dir] of the server. A file already there is replaced; a folder
+ * already there is merged into, so dropping a plugin's config folder updates it without wiping its data.
+ */
 export async function importPaths(root: string, dir: string, sources: string[]): Promise<void> {
     const target = inside(root, dir);
     for (const source of sources) {
         const destination = join(target, basename(source));
-        if (await exists(destination)) throw new Error(`${basename(source)} is already in that folder.`);
-        await cp(source, destination, { recursive: true, errorOnExist: true, force: false });
+        // Dropped from the folder it is already in: copying it onto itself would fail for nothing.
+        if (resolve(source) === destination) continue;
+        const from = await stat(source);
+        const to = await stat(destination).catch(() => null);
+        // cp cannot put a file where a folder is, or the reverse; the dropped one wins.
+        if (to && to.isDirectory() !== from.isDirectory()) await rm(destination, { recursive: true, force: true, maxRetries: 3, retryDelay: 200 });
+        await cp(source, destination, { recursive: true, force: true });
     }
 }
 
