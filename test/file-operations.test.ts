@@ -44,11 +44,28 @@ describe("file operations", () => {
         await expect(remove(root, "..")).rejects.toThrow(/outside/);
     });
 
-    it("imports files from outside without overwriting", async () => {
+    it("imports files from outside, replacing files and merging folders", async () => {
         await writeFile(join(outside, "extra.txt"), "x");
         await importPaths(root, "plugins", [join(outside, "extra.txt")]);
         expect(await readFile(join(root, "plugins", "extra.txt"), "utf8")).toBe("x");
-        await expect(importPaths(root, "plugins", [join(outside, "extra.txt")])).rejects.toThrow(/already in that folder/);
+
+        // Same name again: the file is replaced.
+        await writeFile(join(outside, "extra.txt"), "y");
+        await importPaths(root, "plugins", [join(outside, "extra.txt")]);
+        expect(await readFile(join(root, "plugins", "extra.txt"), "utf8")).toBe("y");
+
+        // A folder merges: files it carries replace theirs, files only on the server stay.
+        await mkdir(join(outside, "plugins"));
+        await writeFile(join(outside, "plugins", "a.yml"), "name: beta\n");
+        await importPaths(root, "", [join(outside, "plugins")]);
+        expect(await readFile(join(root, "plugins", "a.yml"), "utf8")).toBe("name: beta\n");
+        expect(await readFile(join(root, "plugins", "extra.txt"), "utf8")).toBe("y");
+
+        // A file dropped where a folder of that name is replaces the folder.
+        await mkdir(join(root, "clash"));
+        await writeFile(join(outside, "clash"), "file");
+        await importPaths(root, "", [join(outside, "clash")]);
+        expect(await readFile(join(root, "clash"), "utf8")).toBe("file");
     });
 
     it("remembers what a file held when it was first opened or saved", async () => {
